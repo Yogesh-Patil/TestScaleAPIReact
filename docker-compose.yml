@@ -1,0 +1,75 @@
+version: '3.8'
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Your_strong@Passw0rd1
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL","/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Your_strong@Passw0rd1' -Q 'SELECT 1'"]
+      interval: 10s
+      retries: 10
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  api:
+    build: ./src/Api
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+      - redis
+    environment:
+      - ConnectionStrings__Primary=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;
+      - ConnectionStrings__ReadReplica=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;
+      - Redis__Configuration=redis:6379
+    ports:
+      - "5000:80"
+
+  web:
+    build: ./src/Web
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+
+  seeder:
+    build: ./src/Seeder
+    depends_on:
+      - sqlserver
+    environment:
+      - ConnectionString=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;
+      - ROWS=50000
+      - MIN_PAYLOAD=256
+      - MAX_PAYLOAD=2048
+      - BATCH_SIZE=5000
+    command: ["dotnet", "PerfDemo.Seed.dll"]
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:9.5.5
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+
+  k6:
+    image: loadimpact/k6:latest
+    volumes:
+      - ./load-tests/k6:/scripts
+    entrypoint: ["k6"]
+    command: ["run", "/scripts/ramp.js"]
+
+volumes:
+  grafana-storage:

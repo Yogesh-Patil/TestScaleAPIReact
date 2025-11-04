@@ -1,0 +1,50 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "panels": [
+    {
+      "title": "Request Rate (rps)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(http_requests_total[1m]))",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "title": "API p95 (s)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "title": "DB p95 (s)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum(rate(perf_demo_db_query_duration_seconds_bucket[1m])) by (le))",
+          "format": "time_series"
+        }
+      ]
+    },
+    {
+      "title": "Cache Hit Ratio",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "increase(perf_demo_cache_hits_total[5m]) / (increase(perf_demo_cache_hits_total[5m]) + increase(perf_demo_cache_misses_total[5m]))",
+          "format": "time_series"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 16,
+  "title": "PerfDemo Summary",
+  "version": 1
+}
