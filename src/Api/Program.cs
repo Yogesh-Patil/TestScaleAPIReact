@@ -6,9 +6,9 @@ using Prometheus;
 var builder = WebApplication.CreateBuilder(args);
 
 // Config
-var primary = builder.Configuration["ConnectionStrings:Primary"] ?? builder.Environment.GetEnvironmentVariable("ConnectionStrings__Primary");
-var replica = builder.Configuration["ConnectionStrings:ReadReplica"] ?? builder.Environment.GetEnvironmentVariable("ConnectionStrings__ReadReplica");
-var redis = builder.Configuration["Redis:Configuration"] ?? builder.Environment.GetEnvironmentVariable("Redis__Configuration");
+var primary = builder.Configuration["ConnectionStrings:Primary"] ?? Environment.GetEnvironmentVariable("ConnectionStrings__Primary");
+var replica = builder.Configuration["ConnectionStrings:ReadReplica"] ?? Environment.GetEnvironmentVariable("ConnectionStrings__ReadReplica");
+var redis   = builder.Configuration["Redis:Configuration"] ?? Environment.GetEnvironmentVariable("Redis__Configuration");
 
 // DbFactory registration
 builder.Services.AddSingleton(new DbContextFactoryOptions { PrimaryConnection = primary!, ReadReplicaConnection = replica ?? primary! });

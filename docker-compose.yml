@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
@@ -6,7 +5,7 @@ services:
       - ACCEPT_EULA=Y
       - SA_PASSWORD=Your_strong@Passw0rd1
     ports:
-      - "1433:1433"
+      - "1434:1433"
     healthcheck:
       test: ["CMD-SHELL","/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'Your_strong@Passw0rd1' -Q 'SELECT 1'"]
       interval: 10s
@@ -18,32 +17,40 @@ services:
       - "6379:6379"
 
   api:
-    build: ./src/Api
+    build:
+      context: . 
+      dockerfile: src/Api/Dockerfile
     depends_on:
       sqlserver:
         condition: service_healthy
-      - redis
+      redis:
+        condition: service_started
     environment:
-      - ConnectionStrings__Primary=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;
-      - ConnectionStrings__ReadReplica=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;
+      - ConnectionStrings__Primary=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;Encrypt=False;TrustServerCertificate=True;
+      - ConnectionStrings__ReadReplica=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;Encrypt=False;TrustServerCertificate=True;
       - Redis__Configuration=redis:6379
     ports:
       - "5000:80"
 
   web:
-    build: ./src/Web
+    build:
+      context: . 
+      dockerfile: src/Web/Dockerfile
     ports:
       - "5173:5173"
     depends_on:
       - api
 
   seeder:
-    build: ./src/Seeder
+    build:
+      context: . 
+      dockerfile: src/Seeder/Dockerfile
     depends_on:
-      - sqlserver
+      sqlserver:
+        condition: service_healthy
     environment:
-      - ConnectionString=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;
-      - ROWS=50000
+      - ConnectionString=Server=sqlserver,1433;Database=PerfDemo;User Id=sa;Password=Your_strong@Passw0rd1;Encrypt=False;TrustServerCertificate=True;
+      - ROWS=500
       - MIN_PAYLOAD=256
       - MAX_PAYLOAD=2048
       - BATCH_SIZE=5000

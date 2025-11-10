@@ -3,7 +3,7 @@ using Microsoft.Data.SqlClient;
 using System.Text;
 
 var conn = Environment.GetEnvironmentVariable("ConnectionString") ?? throw new Exception("ConnectionString env required");
-var rows = int.Parse(Environment.GetEnvironmentVariable("ROWS") ?? "50000");
+var rows = int.Parse(Environment.GetEnvironmentVariable("ROWS") ?? "500");
 var minPayload = int.Parse(Environment.GetEnvironmentVariable("MIN_PAYLOAD") ?? "256");
 var maxPayload = int.Parse(Environment.GetEnvironmentVariable("MAX_PAYLOAD") ?? "2048");
 var batchSize = int.Parse(Environment.GetEnvironmentVariable("BATCH_SIZE") ?? "5000");
