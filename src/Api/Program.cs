@@ -5,6 +5,14 @@ using Prometheus;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        policy => policy.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
+});
+
 // Config
 var primary = builder.Configuration["ConnectionStrings:Primary"] ?? Environment.GetEnvironmentVariable("ConnectionStrings__Primary");
 var replica = builder.Configuration["ConnectionStrings:ReadReplica"] ?? Environment.GetEnvironmentVariable("ConnectionStrings__ReadReplica");
@@ -33,6 +41,7 @@ builder.Services.AddEndpointsApiExplorer();
 
 var app = builder.Build();
 
+app.UseCors("AllowAll");
 app.UseRouting();
 app.UseHttpMetrics();
 app.UseEndpoints(endpoints =>
